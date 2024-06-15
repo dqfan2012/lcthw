@@ -4,7 +4,7 @@
 # Windows has $OS env var set by default
 OS := $(OS)
 ifeq ($(OS),)
-    OS := $(shell uname)
+	OS := $(shell uname)
 endif
 
 CC = gcc
@@ -25,23 +25,23 @@ LDFLAGS =
 
 # For Windows use MSYS2, cygwin, or WSL 2
 ifeq ($(OS), Windows_NT)
-    COMMON_CFLAGS += -D_WIN32
-    LDLIBS += -lws2_32
-    # Add Windows-specific flags or libraries if needed
+	COMMON_CFLAGS += -D_WIN32
+	LDLIBS += -lws2_32
+	# Add Windows-specific flags or libraries if needed
 else ifeq ($(OS), Linux)
-    IS_LINUX = 1
-    # Add Linux-specific flags or libraries if needed
-    # Example: LDLIBS += -lsomeLinuxSpecificLib
-    # Uncomment the following line if you prefer clang to gcc
-    # If using clang, be sure to use llvm and lldb
-    # CC = clang
+	IS_LINUX = 1
+	# Add Linux-specific flags or libraries if needed
+	# Example: LDLIBS += -lsomeLinuxSpecificLib
+	# Uncomment the following line if you prefer clang to gcc
+	# If using clang, be sure to use llvm and lldb
+	# CC = clang
 else ifeq ($(OS), Darwin)
-    IS_MACOS = 1
-    CC = clang
-    DEBUG_CFLAGS += -Wno-gnu-folding-constant
-    PROD_CFLAGS +=
-    LDFLAGS =
-    # Example: LDLIBS += -lsomeMacSpecificLib
+	IS_MACOS = 1
+	CC = clang
+	DEBUG_CFLAGS += -Wno-gnu-folding-constant
+	PROD_CFLAGS +=
+	LDFLAGS =
+	# Example: LDLIBS += -lsomeMacSpecificLib
 endif
 
 # Static analysis tools
@@ -76,15 +76,15 @@ release: $(EXEC)
 
 # Compile target
 $(EXEC): $(OBJS)
-    $(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LDLIBS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LDLIBS)
 
 # Object file compilation
 %.o: %.c
-    $(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # Run cppcheck
 cppcheck:
-    $(CPPCHECK) --enable=all --inconclusive --std=c17 --quiet $(SRCS)
+	$(CPPCHECK) --enable=all --inconclusive --std=c17 --quiet $(SRCS)
 
 # Run valgrind
 valgrind-memcheck: $(EXEC)
@@ -110,19 +110,19 @@ valgrind-sgcheck: $(EXEC)
 
 # Run leaks on macOS
 leaks: $(EXEC)
-    $(LEAKS) --atExit -- ./$(EXEC)
+	$(LEAKS) --atExit -- ./$(EXEC)
 
 # Run Clang Static Analyzer
 clang-analyze:
-    $(CLANG_ANALYZER) $(SRCS)
+	$(CLANG_ANALYZER) $(SRCS)
 
 # Run Clang-Tidy
 clang-tidy:
-    $(CLANG_TIDY) $(SRCS) -- -std=c17
+	$(CLANG_TIDY) $(SRCS) -- -std=c17
 
 # Run Flawfinder
 flawfinder:
-    $(FLAWFINDER) $(SRCS)
+	$(FLAWFINDER) $(SRCS)
 
 # Run PVS-Studio
 # pvs-studio:
@@ -137,7 +137,7 @@ flawfinder:
 
 # Run SonarQube Scanner
 sonarqube-scanner:
-    $(SONARQUBE_SCANNER)
+	$(SONARQUBE_SCANNER)
 
 # Run SonarQube
 # sonarqube:
@@ -152,13 +152,13 @@ sonarqube-scanner:
 
 # Run Infer
 infer:
-    $(INFER) run -- make
+	$(INFER) run -- make
 
 # Run AddressSanitizer
 asan: CFLAGS += $(ASAN_FLAGS)
 asan: clean $(EXEC)
-    ./$(EXEC)
+	./$(EXEC)
 
 # Clean up
 clean:
-    rm -f $(OBJS) $(EXEC)
+	rm -f $(OBJS) $(EXEC)

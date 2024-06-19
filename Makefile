@@ -202,6 +202,6 @@ tsan: clean debug
 
 # Clean up
 clean:
-	@[ -d "infer-out" ] && rm -rf infer-out || true
-	@[ -d ".scannerwork" ] && rm -rf .scannerwork || true
-	rm -f $(OBJS) $(EXEC) $(EXEC).plist
+	@[ -d "$(SRC_DIR)/infer-out" ] && rm -rf "$(SRC_DIR)/infer-out" || true
+	@[ -d "$(SRC_DIR)/.scannerwork" ] && rm -rf "$(SRC_DIR)/.scannerwork" || true
+	rm -f $(OBJS) $(EXEC) $(SRC_DIR)/*.plist

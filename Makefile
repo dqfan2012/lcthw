@@ -4,6 +4,10 @@
 # Set STRICT variable if you want to use stricter CFLAGS for compiling.
 STRICT := true
 
+# Define variables for the source directory and executable name
+SRC_DIR ?= .
+EXEC_NAME ?= main
+
 # Windows has $OS env var set by default
 OS := $(OS)
 ifeq ($(OS),)
@@ -93,22 +97,20 @@ LEAKS = leaks
 CLANG_ANALYZER = clang --analyze
 CLANG_TIDY = clang-tidy
 FLAWFINDER = flawfinder
-# PVS_STUDIO = pvs-studio-analyzer
-# COVERITY = cov-build --dir cov-int
 SONARQUBE_SCANNER = sonar-scanner
 INFER = infer
 ASAN_FLAGS = -fsanitize=address -fno-omit-frame-pointer
 LSAN_FLAGS = -fsanitize=leak
 TSAN_FLAGS = -fsanitize=thread
 
-# Source files
-SRCS = file1.c file2.c # List C files here.
+# Source files: All .c files in the source directory
+SRCS = $(wildcard $(SRC_DIR)/*.c)
 
-# Object files
+# Object files: Corresponding .o files in the source directory
 OBJS = $(SRCS:.c=.o)
 
-# Executable
-EXEC = file1
+# Executable: Based on the executable name
+EXEC = $(SRC_DIR)/$(EXEC_NAME)
 
 # Default target
 all: debug

@@ -102,13 +102,13 @@ LSAN_FLAGS = -fsanitize=leak
 TSAN_FLAGS = -fsanitize=thread
 
 # Source files
-SRCS = file1.c file2.c # List C files here.
+SRCS = ex2.c
 
 # Object files
 OBJS = $(SRCS:.c=.o)
 
 # Executable
-EXEC = file1
+EXEC = ex2
 
 # Default target
 all: debug

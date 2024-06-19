@@ -1,11 +1,17 @@
 # Ignore everything
 *
 
-# Don't blacklist any filename with any extension
-!*.*
-
 # Don't blacklist directories
 !*/
+
+# Don't blacklist dotfiles
+!.*
+
+# Don't blacklist files with extensions
+!*.*
+
+# Don't blacklist specific extensionless files
+!Makefile
 
 # Prerequisites
 *.d
@@ -57,6 +63,8 @@
 *.su
 *.idb
 *.pdb
+*.plist
+infer-out/
 
 # Kernel Module Compile Results
 *.mod*
@@ -66,3 +74,4 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+.envrc

@@ -2,7 +2,7 @@
 .PHONY: all cppcheck valgrind leaks clang-analyze clang-tidy flawfinder sonar-scanner infer asan clean
 
 # Set STRICT variable if you want to use stricter CFLAGS for compiling.
-STRICT := false
+STRICT := true
 
 # Windows has $OS env var set by default
 OS := $(OS)

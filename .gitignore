@@ -64,7 +64,17 @@
 *.idb
 *.pdb
 *.plist
+
+# Analysis Directories
 infer-out/
+.scannerwork
+.PVS-Studio/
+**/Logs/
+
+# Analysis files
+**/compile_commands.json
+**/*.err
+**/*.log
 
 # Kernel Module Compile Results
 *.mod*
@@ -75,3 +85,18 @@ Module.symvers
 Mkfile.old
 dkms.conf
 .envrc
+
+# Code editor files
+.vscode/
+.idea/
+*.atom/
+.atom/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*~
+.vim/
+.vimrc
+.tmp
+*.kate-swp
+*.komodoproject

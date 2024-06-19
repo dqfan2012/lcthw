@@ -1,5 +1,5 @@
 # Phony targets
-.PHONY: all cppcheck valgrind leaks clang-analyze clang-tidy flawfinder sonar-scanner infer asan clean
+.PHONY: all rebuild cppcheck valgrind leaks clang-analyze clang-tidy flawfinder sonar-scanner infer asan clean
 
 # Set STRICT variable if you want to use stricter CFLAGS for compiling.
 STRICT := true
@@ -16,7 +16,7 @@ endif
 
 CC = gcc
 COMMON_CFLAGS = -std=c17 -Wall -Werror -Wextra -Wno-sign-compare \
-                -Wno-unused-parameter -Wno-unused-variable -Wshadow 
+                -Wno-unused-parameter -Wno-unused-variable -Wshadow
 
 # Set the stricter CFLAGS if the strict var has been set to true
 ifeq ($(STRICT),true)
@@ -66,8 +66,8 @@ else ifeq ($(OS), Linux)
 else ifeq ($(OS), Darwin)
     IS_MACOS = 1
     CC = clang
-    COMMON_CFLAGS += 
-    DEBUG_CFLAGS += 
+    COMMON_CFLAGS +=
+    DEBUG_CFLAGS +=
     PROD_CFLAGS +=
     LDFLAGS +=
     LDLIBS +=
@@ -81,7 +81,7 @@ else ifeq ($(CC),clang)
     DEBUG_CFLAGS += $(DEBUG_CFLAGS_CLANG)
 endif
 
-DEBUG_CFLAGS += $(COMMON_CFLAGS) 
+DEBUG_CFLAGS += $(COMMON_CFLAGS)
 PROD_CFLAGS += $(COMMON_CFLAGS)
 
 # Static analysis tools
@@ -99,6 +99,10 @@ CLANG_TIDY = clang-tidy
 FLAWFINDER = flawfinder
 SONARQUBE_SCANNER = sonar-scanner
 INFER = infer
+PVS_STUDIO_ANALYZE = pvs-studio-analyzer
+PVS_STUDIO_CONVERT = plog-converter
+PVS_LOG = $(SRC_DIR)/$(EXEC_NAME).log
+PVS_ERR = $(SRC_DIR)/$(EXEC_NAME).err
 ASAN_FLAGS = -fsanitize=address -fno-omit-frame-pointer
 LSAN_FLAGS = -fsanitize=leak
 TSAN_FLAGS = -fsanitize=thread
@@ -114,6 +118,10 @@ EXEC = $(SRC_DIR)/$(EXEC_NAME)
 
 # Default target
 all: debug
+
+# Force recompilation
+rebuild: clean
+	$(MAKE) debug
 
 # Compile target for debug build
 debug: CFLAGS = $(DEBUG_CFLAGS)
@@ -159,7 +167,7 @@ valgrind-sgcheck: $(EXEC)
 
 # Run leaks on macOS
 leaks: $(EXEC)
-	$(LEAKS) --atExit -- $(EXEC)
+	sudo $(LEAKS) --atExit -- $(EXEC)
 
 # Run Clang Static Analyzer
 clang-analyze:
@@ -185,6 +193,16 @@ sonar-scanner:
 infer:
 	$(INFER) run -- make
 
+# Run PVS-Studio
+pvs-studio:
+	bear --output $(SRC_DIR)/compile_commands.json -- make rebuild SRC_DIR=$(SRC_DIR) EXEC_NAME=$(EXEC_NAME)
+	@[ -f "$(SRC_DIR)/compile_commands.json" ] && \
+		$(PVS_STUDIO_ANALYZE) analyze -o $(PVS_LOG) --file "$(SRC_DIR)/compile_commands.json" || \
+		(echo "Error: Couldn't find compile_commands.json" && exit 1)
+	$(PVS_STUDIO_CONVERT) -t json -t csv -a 'GA:1,2;OWASP:1;MISRA:1,2;AUTOSAR:1' -o $(SRC_DIR)/Logs \
+		-r $(SRC_DIR) -m cwe -m owasp -m misra -m autosar -n PVS-Log $(PVS_LOG) || \
+		(echo "Error during log conversion. Check $(SRC_DIR)/Logs for details." && exit 1)
+
 # Run AddressSanitizer
 asan: CFLAGS += $(ASAN_FLAGS)
 asan: clean $(EXEC)
@@ -204,4 +222,5 @@ tsan: clean debug
 clean:
 	@[ -d "$(SRC_DIR)/infer-out" ] && rm -rf "$(SRC_DIR)/infer-out" || true
 	@[ -d "$(SRC_DIR)/.scannerwork" ] && rm -rf "$(SRC_DIR)/.scannerwork" || true
-	rm -f $(OBJS) $(EXEC) $(SRC_DIR)/*.plist
+	@[ -d "$(SRC_DIR)/Logs" ] && rm -rf "$(SRC_DIR)/Logs" || true
+	rm -f $(OBJS) $(EXEC) $(SRC_DIR)/*.plist $(SRC_DIR)/compile_commands.json $(SRC_DIR)/*.log

@@ -100,3 +100,4 @@ dkms.conf
 .tmp
 *.kate-swp
 *.komodoproject
+*.geany

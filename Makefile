@@ -15,7 +15,7 @@ ifeq ($(OS),)
 endif
 
 CC = gcc
-COMMON_CFLAGS = -std=c23 -Wall -Werror -Wextra -Wno-sign-compare \
+COMMON_CFLAGS = -std=c17 -Wall -Werror -Wextra -Wno-sign-compare \
                 -Wno-unused-parameter -Wno-unused-variable -Wshadow
 
 # Set the stricter CFLAGS if the strict var has been set to true
@@ -165,7 +165,7 @@ clang-analyze:
 
 # Run Clang-Tidy
 clang-tidy:
-	$(CLANG_TIDY) $(SRCS) -- -std=c23
+	$(CLANG_TIDY) $(SRCS) -- -std=c17
 
 # Run coccinelle
 coccinelle:
@@ -183,7 +183,7 @@ coverage: clean $(EXEC)
 
 # Run cppcheck
 cppcheck:
-	$(CPPCHECK) --enable=all --inconclusive --std=c23 --suppress=missingIncludeSystem --quiet $(SRCS)
+	$(CPPCHECK) --enable=all --inconclusive --std=c17 --suppress=missingIncludeSystem --quiet $(SRCS)
 
 # Check dependencies for vulnerabilities
 dependency-check:

@@ -8,9 +8,9 @@ trim_trailing_whitespace = true
 end_of_line = lf
 insert_final_newline = true
 
-# Tab indentation (no size specified)
-[Makefile]
-indent_style = tab
+[*.json]
+indent_size = 2
+indent_style = space
 
 [*.{c++,cc,cpp,cxx,h,h++,hh,hpp,hxx,inl,ipp,tlh,tli}]
 indent_size = 4
@@ -75,3 +75,6 @@ cpp_space_around_assignment_operator = insert
 cpp_space_pointer_reference_alignment = right
 cpp_space_around_ternary_operator = insert
 cpp_wrap_preserve_blocks = one_liners
+
+[Makefile]
+indent_style = tab

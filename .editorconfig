@@ -1,20 +1,14 @@
-# top-most EditorConfig file
 root = true
 
-# Unix-style newlines with a newline ending every file
 [*]
 charset = utf-8
-trim_trailing_whitespace = true
 end_of_line = lf
-insert_final_newline = true
-
-[*.json]
 indent_size = 2
 indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
 
 [*.{c++,cc,cpp,cxx,h,h++,hh,hpp,hxx,inl,ipp,tlh,tli}]
-indent_size = 4
-
 guidelines = 120
 
 cpp_indent_braces = false

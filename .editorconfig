@@ -8,7 +8,7 @@ indent_size = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-[*.{c,cc,cpp,cxx,h,hpp,hxx}]
+[*.{c,cc,cpp,cxx,h,hpp,hxx,inl,ipp,tlh,tli}]
 guidelines = 120
 
 cpp_indent_braces = false

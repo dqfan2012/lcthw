@@ -3,44 +3,38 @@
 #include <cstring>
 #include <iostream>
 #include <sstream>
+#include <unistd.h>
 
 extern "C" {
 #include "ex1.h"
 }
 
-// Function to capture output of a given function
 std::string captureOutput(void (*func)(int), int arg) {
   int pipefd[2];
   char buffer[128];
   std::string result;
 
-  // Create a pipe
   if (pipe(pipefd) == -1) {
     perror("pipe");
     exit(EXIT_FAILURE);
   }
 
-  // Fork the process
   pid_t pid = fork();
   if (pid == -1) {
     perror("fork");
     exit(EXIT_FAILURE);
   }
 
-  if (pid == 0) {  // Child process
-    // Redirect stdout to the pipe
-    close(pipefd[0]);  // Close unused read end
+  if (pid == 0) {
+    close(pipefd[0]);
     dup2(pipefd[1], STDOUT_FILENO);
     close(pipefd[1]);
 
-    // Call the function
     func(arg);
     exit(EXIT_SUCCESS);
-  } else {  // Parent process
-    // Close write end of the pipe
+  } else {
     close(pipefd[1]);
 
-    // Read the output from the pipe
     ssize_t n;
     while ((n = read(pipefd[0], buffer, sizeof(buffer) - 1)) > 0) {
       buffer[n] = '\0';
@@ -48,7 +42,6 @@ std::string captureOutput(void (*func)(int), int arg) {
     }
     close(pipefd[0]);
 
-    // Wait for the child process to finish
     wait(NULL);
   }
 

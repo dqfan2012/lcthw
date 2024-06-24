@@ -1,11 +1,12 @@
 # Phony targets
-.PHONY: all check asan clang-analyze clang-tidy clean complexity cppcheck coverage dependency-check format flawfinder frama-c fuzz infer leaks lsan llvm-coverage sonar-scanner splint tsan ubsan valgrind check
+.PHONY: all check asan clang-analyze clang-tidy clean complexity cppcheck coverage dependency-check format flawfinder frama-c fuzz infer leaks lsan llvm-coverage sonar-scanner splint tsan ubsan valgrind check clean-test run-tests
 
 # Set STRICT variable if you want to use stricter CFLAGS for compiling.
 STRICT := true
 
 # Define variables for the source directory and executable name
-SRC_DIR ?= .
+SRC_DIR = src
+TEST_DIR = tests
 EXEC_NAME ?= main
 
 # Windows has $OS env var set by default
@@ -103,8 +104,8 @@ LIZARD = lizard
 LLVM_COV = llvm-cov
 LLVM_PROFDATA = llvm-profdata
 LSAN_FLAGS = -fsanitize=leak
-PVS_ERR = $(SRC_DIR)/$(EXEC_NAME).err
-PVS_LOG = $(SRC_DIR)/$(EXEC_NAME).log
+PVS_ERR = $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).err
+PVS_LOG = $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).log
 PVS_STUDIO_ANALYZE = pvs-studio-analyzer
 PVS_STUDIO_CONVERT = plog-converter
 SONARQUBE_SCANNER = sonar-scanner
@@ -119,14 +120,24 @@ VALGRIND_MASSIF = valgrind --tool=massif
 VALGRIND_MEMCHECK = valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes
 VALGRIND_SGCHECK = valgrind --tool=exp-sgcheck
 
-# Source files: All .c files in the source directory
-SRCS = $(wildcard $(SRC_DIR)/*.c)
+# Tests
+HOMEBREW_DIR = /opt/homebrew
+GTEST_DIR = $(HOMEBREW_DIR)/Cellar/googletest/1.14.0
+GTEST_INCLUDE = -I$(GTEST_DIR)/include
+GTEST_LIBS = -L$(GTEST_DIR)/lib -lgtest -lgtest_main -pthread
+# Additional includes/excludes for running tests
+INCLUDE_DIR = -I$(SRC_DIR)/$(EXEC_NAME)
+EXCLUDE_MAIN = -DEXCLUDE_MAIN
 
-# Object files: Corresponding .o files in the source directory
+SRCS = $(wildcard $(SRC_DIR)/$(EXEC_NAME)/*.c)
 OBJS = $(SRCS:.c=.o)
+EXEC = $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME)
 
-# Executable: Based on the executable name
-EXEC = $(SRC_DIR)/$(EXEC_NAME)
+TEST_EXEC = $(TEST_DIR)/$(EXEC_NAME)/test_$(EXEC_NAME)
+TEST_SRCS = $(wildcard $(TEST_DIR)/$(EXEC_NAME)/*.cpp)
+TEST_OBJS = $(TEST_SRCS:.cpp=.o)
+
+CXXFLAGS = -std=c++20 -I$(SRC_DIR)/$(EXEC_NAME) -I$(GTEST_DIR)/include
 
 # Default target
 all: debug
@@ -147,9 +158,17 @@ release: $(EXEC)
 $(EXEC): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LDLIBS)
 
+# Compile target for unit tests with Google Test
+$(TEST_EXEC): $(TEST_OBJS) $(filter-out $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).o, $(OBJS))
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIR) $(GTEST_INCLUDE) -o $@ $(TEST_OBJS) $(OBJS) $(GTEST_LIBS) $(LDLIBS)
+
 # Object file compilation
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+$(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).o: $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).c
+	$(CC) $(CFLAGS) -DTESTING -c $< -o $@
+
+# Object file compilation for C++ test files
+$(TEST_DIR)/%.o: $(TEST_DIR)/%.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIR) $(GTEST_INCLUDE) -c $< -o $@
 
 # Comprehensive analysis target
 check: cppcheck clang-analyze clang-tidy flawfinder splint frama-c infer pvs-studio
@@ -207,7 +226,7 @@ fuzz: clean $(EXEC)
 
 # Run Infer
 infer:
-	$(INFER) run -- make
+	$(INFER) run -- make EXEC_NAME=$(EXEC_NAME) debug
 
 # Run leaks on macOS
 leaks: $(EXEC)
@@ -216,7 +235,6 @@ ifeq ($(IS_MACOS), 1)
 else
 	@echo "Memory check tool not available for this OS."
 endif
-
 
 memcheck: $(EXEC)
 ifeq ($(IS_MACOS), 1)
@@ -241,13 +259,16 @@ lsan: clean debug
 
 # Run PVS-Studio
 pvs-studio:
-	bear --output $(SRC_DIR)/compile_commands.json -- make rebuild SRC_DIR=$(SRC_DIR) EXEC_NAME=$(EXEC_NAME)
-	@[ -f "$(SRC_DIR)/compile_commands.json" ] && \
-		$(PVS_STUDIO_ANALYZE) analyze -o $(PVS_LOG) --file "$(SRC_DIR)/compile_commands.json" || \
+	bear --output $(SRC_DIR)/$(EXEC_NAME)/compile_commands.json -- make rebuild SRC_DIR=$(SRC_DIR) EXEC_NAME=$(EXEC_NAME)
+	@[ -f "$(SRC_DIR)/$(EXEC_NAME)/compile_commands.json" ] && \
+		$(PVS_STUDIO_ANALYZE) analyze -o $(PVS_LOG) --file "$(SRC_DIR)/$(EXEC_NAME)/compile_commands.json" || \
 		(echo "Error: Couldn't find compile_commands.json" && exit 1)
-	$(PVS_STUDIO_CONVERT) -t json -t csv -a 'GA:1,2;OWASP:1;MISRA:1,2;AUTOSAR:1' -o $(SRC_DIR)/Logs \
-		-r $(SRC_DIR) -m cwe -m owasp -m misra -m autosar -n PVS-Log $(PVS_LOG) || \
-		(echo "Error during log conversion. Check $(SRC_DIR)/Logs for details." && exit 1)
+	$(PVS_STUDIO_CONVERT) -t json -t csv -a 'GA:1,2;OWASP:1;MISRA:1,2;AUTOSAR:1' -o $(SRC_DIR)/$(EXEC_NAME)/Logs \
+		-r $(SRC_DIR)/$(EXEC_NAME) -m cwe -m owasp -m misra -m autosar -n PVS-Log $(PVS_LOG) || \
+		(echo "Error during log conversion. Check $(SRC_DIR)/$(EXEC_NAME)/Logs for details." && exit 1)
+
+run-tests: $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).o $(TEST_EXEC)
+	$(TEST_EXEC)
 
 # Run splint
 splint:
@@ -323,7 +344,10 @@ endif
 
 # Clean up
 clean:
-	@[ -d "$(SRC_DIR)/infer-out" ] && rm -rf "$(SRC_DIR)/infer-out" || true
-	@[ -d "$(SRC_DIR)/.scannerwork" ] && rm -rf "$(SRC_DIR)/.scannerwork" || true
-	@[ -d "$(SRC_DIR)/Logs" ] && rm -rf "$(SRC_DIR)/Logs" || true
-	rm -f $(OBJS) $(EXEC) $(SRC_DIR)/*.plist $(SRC_DIR)/compile_commands.json $(SRC_DIR)/*.log $(SRC_DIR)/*.err
+	@[ -d "$(SRC_DIR)/$(EXEC_NAME)/infer-out" ] && rm -rf "$(SRC_DIR)/$(EXEC_NAME)/infer-out" || true
+	@[ -d "$(SRC_DIR)/$(EXEC_NAME)/.scannerwork" ] && rm -rf "$(SRC_DIR)/$(EXEC_NAME)/.scannerwork" || true
+	@[ -d "$(SRC_DIR)/$(EXEC_NAME)/Logs" ] && rm -rf "$(SRC_DIR)/$(EXEC_NAME)/Logs" || true
+	rm -f $(OBJS) $(EXEC) $(SRC_DIR)/$(EXEC_NAME)/*.plist $(SRC_DIR)/$(EXEC_NAME)/compile_commands.json $(SRC_DIR)/$(EXEC_NAME)/*.log $(SRC_DIR)/$(EXEC_NAME)/*.err
+
+clean-test:
+	rm -f $(TEST_OBJS) $(TEST_EXEC) $(OBJS)

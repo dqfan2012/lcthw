@@ -13,6 +13,9 @@
 # Don't blacklist specific extensionless files
 !Makefile
 
+# Don't blacklist specific folders
+!googletest/**
+
 # Prerequisites
 *.d
 

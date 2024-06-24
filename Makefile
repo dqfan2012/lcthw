@@ -159,16 +159,16 @@ $(EXEC): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LDLIBS)
 
 # Compile target for unit tests with Google Test
-$(TEST_EXEC): $(TEST_OBJS) $(filter-out $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).o, $(OBJS))
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIR) $(GTEST_INCLUDE) -o $@ $(TEST_OBJS) $(OBJS) $(GTEST_LIBS) $(LDLIBS)
+$(TEST_EXEC): $(TEST_OBJS) $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIR) $(GTEST_INCLUDE) -o $@ $(TEST_OBJS) $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o $(GTEST_LIBS) $(LDLIBS)
 
 # Object file compilation
 $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).o: $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).c
-	$(CC) $(CFLAGS) -DTESTING -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# Object file compilation for C++ test files
-$(TEST_DIR)/%.o: $(TEST_DIR)/%.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIR) $(GTEST_INCLUDE) -c $< -o $@
+# Object file compilation for running tests
+$(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o: $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).c
+	$(CC) $(CFLAGS) -DTESTING -c $< -o $@
 
 # Comprehensive analysis target
 check: cppcheck clang-analyze clang-tidy flawfinder splint frama-c infer pvs-studio
@@ -267,7 +267,7 @@ pvs-studio:
 		-r $(SRC_DIR)/$(EXEC_NAME) -m cwe -m owasp -m misra -m autosar -n PVS-Log $(PVS_LOG) || \
 		(echo "Error during log conversion. Check $(SRC_DIR)/$(EXEC_NAME)/Logs for details." && exit 1)
 
-run-tests: $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).o $(TEST_EXEC)
+run-tests: $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o $(TEST_EXEC)
 	$(TEST_EXEC)
 
 # Run splint

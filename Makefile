@@ -159,15 +159,15 @@ $(EXEC): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(EXEC) $(LDFLAGS) $(LDLIBS)
 
 # Compile target for unit tests with Google Test
-$(TEST_EXEC): $(TEST_OBJS) $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o
-	$(CXX) $(CXXFLAGS) $(INCLUDE_DIR) $(GTEST_INCLUDE) -o $@ $(TEST_OBJS) $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o $(GTEST_LIBS) $(LDLIBS)
+$(TEST_EXEC): $(TEST_OBJS) $(TEST_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o
+	$(CXX) $(CXXFLAGS) $(INCLUDE_DIR) $(GTEST_INCLUDE) -o $@ $(TEST_OBJS) $(TEST_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o $(GTEST_LIBS) $(LDLIBS)
 
 # Object file compilation
 $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).o: $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Object file compilation for running tests
-$(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o: $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).c
+$(TEST_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o: $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME).c
 	$(CC) $(CFLAGS) -DTESTING -c $< -o $@
 
 # Comprehensive analysis target
@@ -267,7 +267,7 @@ pvs-studio:
 		-r $(SRC_DIR)/$(EXEC_NAME) -m cwe -m owasp -m misra -m autosar -n PVS-Log $(PVS_LOG) || \
 		(echo "Error during log conversion. Check $(SRC_DIR)/$(EXEC_NAME)/Logs for details." && exit 1)
 
-run-tests: $(SRC_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o $(TEST_EXEC)
+run-tests: $(TEST_DIR)/$(EXEC_NAME)/$(EXEC_NAME)_test.o $(TEST_EXEC)
 	$(TEST_EXEC)
 
 # Run splint
@@ -347,7 +347,7 @@ clean:
 	@[ -d "$(SRC_DIR)/$(EXEC_NAME)/infer-out" ] && rm -rf "$(SRC_DIR)/$(EXEC_NAME)/infer-out" || true
 	@[ -d "$(SRC_DIR)/$(EXEC_NAME)/.scannerwork" ] && rm -rf "$(SRC_DIR)/$(EXEC_NAME)/.scannerwork" || true
 	@[ -d "$(SRC_DIR)/$(EXEC_NAME)/Logs" ] && rm -rf "$(SRC_DIR)/$(EXEC_NAME)/Logs" || true
-	rm -f $(OBJS) $(EXEC) $(SRC_DIR)/$(EXEC_NAME)/*.plist $(SRC_DIR)/$(EXEC_NAME)/compile_commands.json $(SRC_DIR)/$(EXEC_NAME)/*.log $(SRC_DIR)/$(EXEC_NAME)/*.err
+	rm -f $(OBJS) $(TEST_OBJS) $(EXEC) $(SRC_DIR)/$(EXEC_NAME)/*.plist $(SRC_DIR)/$(EXEC_NAME)/compile_commands.json $(SRC_DIR)/$(EXEC_NAME)/*.log $(SRC_DIR)/$(EXEC_NAME)/*.err
 
 clean-test:
-	rm -f $(TEST_OBJS) $(TEST_EXEC) $(OBJS)
+	rm -f $(TEST_OBJS) $(TEST_EXEC) $(OBJS) $(TEST_DIR)/$(EXEC_NAME)/*.o
